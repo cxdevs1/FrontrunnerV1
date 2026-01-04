@@ -1,35 +1,52 @@
 import { db } from "./db";
-import { todos, type Todo, type InsertTodo } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import {
+  indexEvents,
+  dailyMetrics,
+  type IndexEvent,
+  type InsertIndexEvent,
+  type DailyMetric,
+  type InsertDailyMetric,
+} from "@shared/schema";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
-  getTodos(): Promise<Todo[]>;
-  createTodo(todo: InsertTodo): Promise<Todo>;
-  updateTodo(id: number, todo: Partial<InsertTodo>): Promise<Todo | undefined>;
-  deleteTodo(id: number): Promise<void>;
+  getIndexEvents(): Promise<IndexEvent[]>;
+  createIndexEvent(event: InsertIndexEvent): Promise<IndexEvent>;
+  deleteIndexEvent(id: number): Promise<void>;
+  getDailyMetrics(): Promise<DailyMetric[]>;
+  getDailyMetricsByTicker(ticker: string): Promise<DailyMetric[]>;
+  createDailyMetric(metric: InsertDailyMetric): Promise<DailyMetric>;
 }
 
 export class DatabaseStorage implements IStorage {
-  async getTodos(): Promise<Todo[]> {
-    return await db.select().from(todos).orderBy(todos.id);
+  async getIndexEvents(): Promise<IndexEvent[]> {
+    return await db.select().from(indexEvents).orderBy(desc(indexEvents.effectiveDate));
   }
 
-  async createTodo(insertTodo: InsertTodo): Promise<Todo> {
-    const [todo] = await db.insert(todos).values(insertTodo).returning();
-    return todo;
+  async createIndexEvent(event: InsertIndexEvent): Promise<IndexEvent> {
+    const [created] = await db.insert(indexEvents).values(event).returning();
+    return created;
   }
 
-  async updateTodo(id: number, updates: Partial<InsertTodo>): Promise<Todo | undefined> {
-    const [todo] = await db
-      .update(todos)
-      .set(updates)
-      .where(eq(todos.id, id))
-      .returning();
-    return todo;
+  async deleteIndexEvent(id: number): Promise<void> {
+    await db.delete(indexEvents).where(eq(indexEvents.id, id));
   }
 
-  async deleteTodo(id: number): Promise<void> {
-    await db.delete(todos).where(eq(todos.id, id));
+  async getDailyMetrics(): Promise<DailyMetric[]> {
+    return await db.select().from(dailyMetrics).orderBy(desc(dailyMetrics.createdAt));
+  }
+
+  async getDailyMetricsByTicker(ticker: string): Promise<DailyMetric[]> {
+    return await db
+      .select()
+      .from(dailyMetrics)
+      .where(eq(dailyMetrics.ticker, ticker))
+      .orderBy(desc(dailyMetrics.date));
+  }
+
+  async createDailyMetric(metric: InsertDailyMetric): Promise<DailyMetric> {
+    const [created] = await db.insert(dailyMetrics).values(metric).returning();
+    return created;
   }
 }
 

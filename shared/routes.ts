@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { insertTodoSchema, todos } from "./schema";
+import { insertIndexEventSchema, insertDailyMetricSchema, analyzeTickerSchema, indexEvents, dailyMetrics } from "./schema";
 
 export const errorSchemas = {
   validation: z.object({
@@ -14,39 +14,68 @@ export const errorSchemas = {
   }),
 };
 
+export const analysisResultSchema = z.object({
+  ticker: z.string(),
+  pressureScore: z.number(),
+  pressureScoreDisplay: z.string(),
+  relativeVolume: z.number(),
+  relativeVolumeDisplay: z.string(),
+  algoAlert: z.string(),
+  action: z.string(),
+  isAlgoActive: z.boolean(),
+});
+
 export const api = {
-  todos: {
+  indexEvents: {
     list: {
       method: 'GET' as const,
-      path: '/api/todos',
+      path: '/api/index-events',
       responses: {
-        200: z.array(z.custom<typeof todos.$inferSelect>()),
+        200: z.array(z.custom<typeof indexEvents.$inferSelect>()),
       },
     },
     create: {
       method: 'POST' as const,
-      path: '/api/todos',
-      input: insertTodoSchema,
+      path: '/api/index-events',
+      input: insertIndexEventSchema,
       responses: {
-        201: z.custom<typeof todos.$inferSelect>(),
+        201: z.custom<typeof indexEvents.$inferSelect>(),
         400: errorSchemas.validation,
-      },
-    },
-    update: {
-      method: 'PATCH' as const,
-      path: '/api/todos/:id',
-      input: insertTodoSchema.partial(),
-      responses: {
-        200: z.custom<typeof todos.$inferSelect>(),
-        404: errorSchemas.notFound,
       },
     },
     delete: {
       method: 'DELETE' as const,
-      path: '/api/todos/:id',
+      path: '/api/index-events/:id',
       responses: {
         204: z.void(),
         404: errorSchemas.notFound,
+      },
+    },
+  },
+  dailyMetrics: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/daily-metrics',
+      responses: {
+        200: z.array(z.custom<typeof dailyMetrics.$inferSelect>()),
+      },
+    },
+    byTicker: {
+      method: 'GET' as const,
+      path: '/api/daily-metrics/:ticker',
+      responses: {
+        200: z.array(z.custom<typeof dailyMetrics.$inferSelect>()),
+      },
+    },
+  },
+  analyze: {
+    calculate: {
+      method: 'POST' as const,
+      path: '/api/analyze',
+      input: analyzeTickerSchema,
+      responses: {
+        200: analysisResultSchema,
+        400: errorSchemas.validation,
       },
     },
   },
