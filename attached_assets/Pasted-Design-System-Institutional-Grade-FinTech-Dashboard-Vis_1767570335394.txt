@@ -1,0 +1,137 @@
+Design System: Institutional-Grade FinTech Dashboard
+Visual Identity:
+
+High-density, institutional-grade interface inspired by Stripe Design System
+Massive whitespace for breathing room and visual clarity
+12px border radii (rounded-xl for cards, rounded-lg for tags/buttons)
+Inter font family (system default)
+Clean, professional aesthetic with backdrop-blur effects
+Color Palette:
+
+Backgrounds & Neutrals:
+
+slate-50 - Main application background
+white - Card backgrounds with subtle borders
+slate-100/200/300 - Inactive states, borders, subtle UI elements
+slate-500/600/700/900 - Text hierarchy (labels to headings)
+Primary Accent (Intelligence/Active States):
+
+indigo-600 - Primary brand color
+indigo-to-purple-600 gradient - Active alert states, premium features
+cyan-500/600 - Intelligence features, secondary highlights
+purple-600/700 - Secondary accent for promotions
+Semantic Colors:
+
+emerald-50/100/600/700 - Success, vetted status (scores 85+)
+cyan-50/100/600 - Medium confidence (scores 75-84)
+amber-50/100/200/600/700/900 - Warnings, vacancies, opportunities
+red-600 - Critical risks (Hard Deck stop-losses)
+gold-to-purple gradient - "Ignition" state (scores 75+)
+Card Architecture Pattern:
+
+Three-Section Structure:
+
+Header Strip (colored gradient background):
+
+bg-gradient-to-r from-{color}-50 to-{color}-100/50
+border-b border-{color}-200
+px-4 py-2.5 padding
+Left: Icon + Title/Symbol + Badges
+Right: Score/Status indicator
+Main Content Area (white background):
+
+p-4 padding
+Subtitle/description at top with mb-5
+Grid layout: grid grid-cols-2 gap-4 for paired information
+Each grid cell uses space-y-2.5 for label-to-content spacing
+Footer Section (optional):
+
+pt-4 border-t border-slate-200
+Grid layout matching content area: grid grid-cols-2 gap-4
+Left: Label with icon + tooltip
+Right: Action button (right-aligned with justify-end)
+Label + Tag Pattern:
+
+Labels (Uppercase Headers):
+
+text-xs font-medium text-slate-500 uppercase tracking-wide
+Positioned with flex items-center gap-1.5 for tooltip alignment
+Use <br /> for intentional line breaks in compact spaces
+Tags/Badges (Data Display):
+
+w-full px-3.5 py-2.5 rounded-lg text-center font-semibold text-sm
+Add whitespace-nowrap to prevent text wrapping
+Border pattern: border border-{color}-300
+Background: bg-{color}-100 with matching text color
+Button Patterns:
+
+Alert Toggle Buttons:
+
+Inactive: bg-slate-100 text-slate-600 hover:bg-slate-200
+Active: bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-md
+Icons: Bell (inactive) → BellRing (active)
+Active state includes white pulse glow:
+<div className="absolute inset-0 bg-white rounded-full blur-sm opacity-40 animate-pulse"></div>
+Text changes: "Enable Alert" → "Alert Active"
+Size: px-3 py-1.5 rounded-lg text-xs font-semibold
+Primary Action Buttons:
+
+px-3 py-2 rounded-lg text-xs font-semibold
+Flex with icon: flex items-center gap-2
+Semantic colors based on context (amber for vacancies, indigo for primary)
+Status Badges:
+
+Mini Badges (inline with titles):
+
+px-2 py-0.5 rounded-lg text-xs font-semibold
+Include icon with gap-1 spacing
+Border pattern for emphasis: border border-{color}-300
+Count Badges:
+
+px-2 py-1 rounded-lg text-xs font-semibold
+Positioned in header with justify-between
+Tooltip System:
+
+Gray ? icon that triggers clean popover cards
+Positioned with gap-1.5 from labels
+Layman definitions for all technical terms
+Custom icons for special tooltips (e.g., ArrowDown for risks)
+Spacing & Alignment Rules:
+
+Card outer padding: p-6
+Section vertical spacing: space-y-8 (between major cards)
+Item spacing within sections: space-y-3 (between list items)
+Content spacing: mb-5 (between major content blocks)
+Label-to-content: space-y-2.5
+Grid gaps: gap-4 (standard column separation)
+Icon-to-text: gap-1.5 for labels, gap-2 for buttons
+Grid Layout System:
+
+Two-column grids: grid grid-cols-2 gap-4
+Vertical alignment: Info icons should align on vertical axis across rows
+Use matching grid structure in footers to maintain column alignment
+Interactive States:
+
+Hover: hover:border-{accent}-300 hover:shadow-md
+Transitions: transition-all for smooth state changes
+Cursor: cursor-pointer on clickable cards
+Group hover effects: group and group-hover: patterns
+Animation Patterns:
+
+Pulsing indicators: animate-pulse for live updates
+Ping animations: animate-ping for real-time alerts
+Combined animations for "breathing" effects on active alerts
+Typography Rules:
+
+DO NOT use Tailwind font-size, font-weight, or line-height classes unless specifically changing from defaults
+Headings: Default h3 styling from globals.css
+Labels: text-xs font-medium uppercase tracking-wide
+Body text: text-sm for primary content
+Scores/emphasis: text-2xl font-bold for large numbers
+Subtle text: text-xs text-slate-500 for metadata
+Border & Shadow System:
+
+Default card border: border border-slate-200
+Active/hover borders: border-{color}-200/300
+Elevation: shadow-md on hover or active states
+Backdrop blur: backdrop-blur for floating elements

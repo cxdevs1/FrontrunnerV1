@@ -1,14 +1,24 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { TrendingUp, AlertTriangle, Activity, BarChart3, Flame, Zap, CheckCircle } from "lucide-react";
+import { 
+  TrendingUp, 
+  AlertTriangle, 
+  Activity, 
+  BarChart3, 
+  Flame, 
+  Zap, 
+  CheckCircle,
+  Target,
+  Clock,
+  Bell,
+  BellRing,
+  HelpCircle
+} from "lucide-react";
 import type { AnalysisResult, DailyMetric } from "@shared/schema";
 
 const INDICES = ["SP500", "SP400", "SP600"] as const;
@@ -25,6 +35,7 @@ export default function Home() {
     typicalMorningVolume: "",
   });
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [alertEnabled, setAlertEnabled] = useState(false);
 
   const { data: metrics = [], isLoading: metricsLoading } = useQuery<DailyMetric[]>({
     queryKey: ["/api/daily-metrics"],
@@ -77,313 +88,404 @@ export default function Home() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const getIntensityIcon = (intensity: string) => {
+  const getIntensityConfig = (intensity: string) => {
     switch (intensity) {
       case "EXTREME":
-        return <Flame className="w-4 h-4" />;
+        return { 
+          icon: <Flame className="w-4 h-4" />, 
+          gradient: "card-header-gradient-red",
+          tag: "tag-red",
+          label: "EXTREME PRESSURE"
+        };
       case "HIGH":
-        return <Zap className="w-4 h-4" />;
+        return { 
+          icon: <Zap className="w-4 h-4" />, 
+          gradient: "card-header-gradient-amber",
+          tag: "tag-amber",
+          label: "HIGH PRESSURE"
+        };
       default:
-        return <CheckCircle className="w-4 h-4" />;
+        return { 
+          icon: <CheckCircle className="w-4 h-4" />, 
+          gradient: "card-header-gradient-emerald",
+          tag: "tag-emerald",
+          label: "NORMAL PRESSURE"
+        };
     }
   };
 
-  const getIntensityColor = (intensity: string) => {
-    switch (intensity) {
-      case "EXTREME":
-        return "bg-red-500/10 text-red-600 border-red-500/30 dark:text-red-400";
-      case "HIGH":
-        return "bg-amber-500/10 text-amber-600 border-amber-500/30 dark:text-amber-400";
-      default:
-        return "bg-green-500/10 text-green-600 border-green-500/30 dark:text-green-400";
-    }
+  const formatNumber = (num: number) => {
+    if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)}B`;
+    if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+    if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
+    return num.toLocaleString();
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center gap-3">
-          <BarChart3 className="w-8 h-8 text-muted-foreground" />
-          <div>
-            <h1 className="text-2xl font-semibold" data-testid="text-page-title">
-              Index Addition Analyzer
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              S&P 500, MidCap 400 & SmallCap 600 mechanical pressure calculator
-            </p>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6">
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-md">
+              <BarChart3 className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-slate-900 dark:text-slate-100" data-testid="text-page-title">
+                Index Inclusion Sniper
+              </h1>
+              <p className="text-slate-500 dark:text-slate-400">
+                S&P 500 / MidCap 400 / SmallCap 600 Mechanical Pressure Calculator
+              </p>
+            </div>
           </div>
+          <button
+            onClick={() => setAlertEnabled(!alertEnabled)}
+            className={`relative px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
+              alertEnabled 
+                ? "bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-md" 
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
+            }`}
+            data-testid="button-alert-toggle"
+          >
+            {alertEnabled && (
+              <div className="absolute inset-0 bg-white rounded-lg blur-sm opacity-40 animate-pulse" />
+            )}
+            <span className="relative z-10 flex items-center gap-2">
+              {alertEnabled ? <BellRing className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+              <span className="font-semibold">{alertEnabled ? "Alert Active" : "Enable Alert"}</span>
+            </span>
+          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Analyze New Addition</CardTitle>
-            </CardHeader>
-            <CardContent>
+          {/* Analysis Input Card */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all">
+            {/* Header Strip */}
+            <div className="card-header-gradient-indigo px-4 py-2.5 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <span className="font-semibold text-slate-900 dark:text-slate-100">Analyze New Addition</span>
+              </div>
+              <span className="px-2 py-0.5 rounded-lg bg-indigo-100 text-indigo-700 border border-indigo-300 dark:bg-indigo-900 dark:text-indigo-300 dark:border-indigo-700 font-semibold whitespace-nowrap">
+                Calculator
+              </span>
+            </div>
+            
+            {/* Main Content */}
+            <div className="p-4">
+              <p className="text-slate-500 dark:text-slate-400 mb-5">
+                Enter stock data to calculate mechanical buying pressure from index funds.
+              </p>
+              
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="ticker">Ticker Symbol</Label>
-                  <Input
-                    id="ticker"
-                    data-testid="input-ticker"
-                    placeholder="e.g. PATH"
-                    value={formData.ticker}
-                    onChange={(e) => handleChange("ticker", e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Target Index</Label>
-                  <RadioGroup
-                    value={formData.indexTarget}
-                    onValueChange={(value) => handleChange("indexTarget", value)}
-                    className="flex gap-4"
-                    data-testid="radio-index"
-                  >
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="SP500" id="sp500" />
-                      <Label htmlFor="sp500" className="font-normal cursor-pointer">S&P 500</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="SP400" id="sp400" />
-                      <Label htmlFor="sp400" className="font-normal cursor-pointer">MidCap 400</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="SP600" id="sp600" />
-                      <Label htmlFor="sp600" className="font-normal cursor-pointer">SmallCap 600</Label>
-                    </div>
-                  </RadioGroup>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2.5">
+                    <label className="label-uppercase flex items-center gap-1.5">
+                      Ticker Symbol
+                      <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help" />
+                    </label>
+                    <Input
+                      data-testid="input-ticker"
+                      placeholder="e.g. PATH"
+                      value={formData.ticker}
+                      onChange={(e) => handleChange("ticker", e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2.5">
+                    <label className="label-uppercase">Target Index</label>
+                    <RadioGroup
+                      value={formData.indexTarget}
+                      onValueChange={(value) => handleChange("indexTarget", value)}
+                      className="flex gap-2"
+                      data-testid="radio-index"
+                    >
+                      {INDICES.map((idx) => (
+                        <label
+                          key={idx}
+                          className={`flex-1 px-3 py-2 rounded-lg border text-center cursor-pointer transition-all ${
+                            formData.indexTarget === idx
+                              ? "bg-indigo-100 border-indigo-300 text-indigo-700 dark:bg-indigo-900 dark:border-indigo-600 dark:text-indigo-300"
+                              : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400"
+                          }`}
+                        >
+                          <RadioGroupItem value={idx} id={idx} className="sr-only" />
+                          <span className="font-semibold whitespace-nowrap">{idx}</span>
+                        </label>
+                      ))}
+                    </RadioGroup>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="marketCap">Market Cap ($)</Label>
+                  <div className="space-y-2.5">
+                    <label className="label-uppercase">Market Cap ($)</label>
                     <Input
-                      id="marketCap"
                       data-testid="input-market-cap"
                       type="number"
                       placeholder="15000000000"
                       value={formData.marketCap}
                       onChange={(e) => handleChange("marketCap", e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-lg"
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Current Price ($)</Label>
+                  <div className="space-y-2.5">
+                    <label className="label-uppercase">Current Price ($)</label>
                     <Input
-                      id="price"
                       data-testid="input-price"
                       type="number"
                       step="0.01"
                       placeholder="20.00"
                       value={formData.price}
                       onChange={(e) => handleChange("price", e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-lg"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="avgVolume30d">Avg 30-Day Volume</Label>
+                <div className="space-y-2.5">
+                  <label className="label-uppercase flex items-center gap-1.5">
+                    Avg 30-Day Volume
+                    <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help" />
+                  </label>
                   <Input
-                    id="avgVolume30d"
                     data-testid="input-avg-volume"
                     type="number"
                     placeholder="5000000"
                     value={formData.avgVolume30d}
                     onChange={(e) => handleChange("avgVolume30d", e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-lg"
                     required
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="morningVolume">Morning Volume (Today)</Label>
+                  <div className="space-y-2.5">
+                    <label className="label-uppercase">
+                      Morning Volume<br />(Today)
+                    </label>
                     <Input
-                      id="morningVolume"
                       data-testid="input-morning-volume"
                       type="number"
                       placeholder="4000000"
                       value={formData.morningVolume}
                       onChange={(e) => handleChange("morningVolume", e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-lg"
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="typicalMorningVolume">Typical Morning Vol</Label>
+                  <div className="space-y-2.5">
+                    <label className="label-uppercase">
+                      Typical Morning<br />Volume
+                    </label>
                     <Input
-                      id="typicalMorningVolume"
                       data-testid="input-typical-morning-volume"
                       type="number"
                       placeholder="1000000"
                       value={formData.typicalMorningVolume}
                       onChange={(e) => handleChange("typicalMorningVolume", e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-lg"
                       required
                     />
                   </div>
                 </div>
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  data-testid="button-analyze"
-                  disabled={analyzeMutation.isPending}
-                >
-                  {analyzeMutation.isPending ? "Analyzing..." : "Analyze Ticker"}
-                </Button>
+                {/* Footer Section */}
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+                  <Button
+                    type="submit"
+                    className="w-full px-3 py-2 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 text-white font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                    data-testid="button-analyze"
+                    disabled={analyzeMutation.isPending}
+                  >
+                    <Activity className="w-4 h-4" />
+                    {analyzeMutation.isPending ? "Analyzing..." : "Calculate Pressure Score"}
+                  </Button>
+                </div>
               </form>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {analysisResult && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Activity className="w-5 h-5" />
-                    {analysisResult.ticker}
-                  </div>
-                  <Badge variant="outline">{analysisResult.indexTarget}</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          {/* Results Card */}
+          {analysisResult ? (
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-md transition-all">
+              {/* Header Strip */}
+              <div className={`${getIntensityConfig(analysisResult.intensity).gradient} px-4 py-2.5 flex items-center justify-between gap-2`}>
+                <div className="flex items-center gap-2">
+                  {getIntensityConfig(analysisResult.intensity).icon}
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">{analysisResult.ticker}</span>
+                  <span className={`px-2 py-0.5 rounded-lg font-semibold whitespace-nowrap ${getIntensityConfig(analysisResult.intensity).tag}`}>
+                    {analysisResult.indexTarget}
+                  </span>
+                </div>
+                <div className="font-bold text-slate-900 dark:text-slate-100" data-testid="text-pressure-score-header">
+                  {analysisResult.pressureScoreDisplay}
+                </div>
+              </div>
+              
+              {/* Main Content */}
+              <div className="p-4">
+                <p className="text-slate-500 dark:text-slate-400 mb-5">
+                  {getIntensityConfig(analysisResult.intensity).label} - {analysisResult.action}
+                </p>
+                
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-md bg-muted">
-                    <div className="text-sm text-muted-foreground">Pressure Score</div>
-                    <div className="text-2xl font-bold" data-testid="text-pressure-score">
+                  <div className="space-y-2.5">
+                    <label className="label-uppercase flex items-center gap-1.5">
+                      Pressure Score
+                      <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help" />
+                    </label>
+                    <div className={`w-full px-3.5 py-2.5 rounded-lg text-center font-semibold whitespace-nowrap ${getIntensityConfig(analysisResult.intensity).tag}`} data-testid="text-pressure-score">
                       {analysisResult.pressureScoreDisplay}
                     </div>
                   </div>
-                  <div className="p-4 rounded-md bg-muted">
-                    <div className="text-sm text-muted-foreground">Shares to Buy</div>
-                    <div className="text-2xl font-bold" data-testid="text-required-shares">
+                  <div className="space-y-2.5">
+                    <label className="label-uppercase flex items-center gap-1.5">
+                      Shares to Buy
+                      <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help" />
+                    </label>
+                    <div className="w-full px-3.5 py-2.5 rounded-lg text-center font-semibold tag-indigo whitespace-nowrap" data-testid="text-required-shares">
                       {analysisResult.requiredSharesDisplay}
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div
-                    className={`p-3 rounded-md border flex items-center gap-2 ${getIntensityColor(
-                      analysisResult.intensity
-                    )}`}
-                  >
-                    {getIntensityIcon(analysisResult.intensity)}
-                    <span className="font-semibold" data-testid="text-intensity">
-                      {analysisResult.intensity}
-                    </span>
-                  </div>
-                  <div className="p-3 rounded-md bg-muted flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Rel. Vol:</span>
-                    <span className="font-semibold" data-testid="text-relative-volume">
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div className="space-y-2.5">
+                    <label className="label-uppercase">Relative Volume</label>
+                    <div className="w-full px-3.5 py-2.5 rounded-lg text-center font-semibold tag-cyan whitespace-nowrap" data-testid="text-relative-volume">
                       {analysisResult.relativeVolumeDisplay}
+                    </div>
+                  </div>
+                  <div className="space-y-2.5">
+                    <label className="label-uppercase">Algo Detection</label>
+                    <div className={`w-full px-3.5 py-2.5 rounded-lg text-center font-semibold whitespace-nowrap ${analysisResult.isAlgoActive ? "tag-red" : "tag-emerald"}`} data-testid="badge-algo-status">
+                      {analysisResult.isAlgoActive ? "CAUTION" : "CLEAR"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="pt-4 mt-4 border-t border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-4">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-slate-400" />
+                    <span className="text-slate-500 dark:text-slate-400">
+                      {analysisResult.algoAlert}
                     </span>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {analysisResult.isAlgoActive ? (
-                    <Badge variant="destructive" className="flex items-center gap-1" data-testid="badge-algo-alert">
-                      <AlertTriangle className="w-3 h-3" />
-                      {analysisResult.algoAlert}
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary" className="flex items-center gap-1" data-testid="badge-algo-normal">
-                      <TrendingUp className="w-3 h-3" />
-                      {analysisResult.algoAlert}
-                    </Badge>
-                  )}
-                </div>
-
-                <div
-                  className={`p-4 rounded-md border ${
-                    analysisResult.action === "High Squeeze Potential"
-                      ? "bg-green-500/10 border-green-500/30 dark:bg-green-900/20"
-                      : "bg-amber-500/10 border-amber-500/30 dark:bg-amber-900/20"
-                  }`}
-                >
-                  <div className="text-sm text-muted-foreground">Recommendation</div>
-                  <div
-                    className={`text-lg font-semibold ${
-                      analysisResult.action === "High Squeeze Potential"
-                        ? "text-green-600 dark:text-green-400"
-                        : "text-amber-600 dark:text-amber-400"
-                    }`}
-                    data-testid="text-action"
-                  >
-                    {analysisResult.action}
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => setAlertEnabled(true)}
+                      className="px-3 py-2 rounded-lg bg-amber-100 text-amber-700 border border-amber-300 dark:bg-amber-900 dark:text-amber-300 dark:border-amber-700 font-semibold flex items-center gap-2 hover:shadow-md transition-all"
+                      data-testid="button-set-alert"
+                    >
+                      <Bell className="w-4 h-4" />
+                      Set Alert
+                    </button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm flex items-center justify-center p-12">
+              <div className="text-center">
+                <Activity className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                <p className="text-slate-500 dark:text-slate-400">
+                  Enter stock data and click "Calculate Pressure Score" to see results
+                </p>
+              </div>
+            </div>
           )}
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Analysis History</CardTitle>
-          </CardHeader>
-          <CardContent>
+        {/* History Card */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+          {/* Header Strip */}
+          <div className="card-header-gradient-cyan px-4 py-2.5 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+              <span className="font-semibold text-slate-900 dark:text-slate-100">Analysis History</span>
+            </div>
+            <span className="px-2 py-1 rounded-lg bg-cyan-100 text-cyan-700 border border-cyan-300 dark:bg-cyan-900 dark:text-cyan-300 dark:border-cyan-700 font-semibold">
+              {metrics.length}
+            </span>
+          </div>
+          
+          {/* Main Content */}
+          <div className="p-4">
             {metricsLoading ? (
-              <div className="text-muted-foreground">Loading...</div>
+              <div className="text-slate-500 dark:text-slate-400 animate-pulse">Loading history...</div>
             ) : metrics.length === 0 ? (
-              <div className="text-muted-foreground">No analyses yet. Run your first analysis above.</div>
+              <div className="text-center py-8">
+                <BarChart3 className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                <p className="text-slate-500 dark:text-slate-400">
+                  No analyses yet. Run your first analysis above.
+                </p>
+              </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full">
                   <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2 px-3 font-medium">Ticker</th>
-                      <th className="text-left py-2 px-3 font-medium">Index</th>
-                      <th className="text-left py-2 px-3 font-medium">Date</th>
-                      <th className="text-left py-2 px-3 font-medium">Pressure</th>
-                      <th className="text-left py-2 px-3 font-medium">Intensity</th>
-                      <th className="text-left py-2 px-3 font-medium">Rel. Vol</th>
-                      <th className="text-left py-2 px-3 font-medium">Status</th>
+                    <tr className="border-b border-slate-200 dark:border-slate-700">
+                      <th className="text-left py-2 px-3 label-uppercase">Ticker</th>
+                      <th className="text-left py-2 px-3 label-uppercase">Index</th>
+                      <th className="text-left py-2 px-3 label-uppercase">Date</th>
+                      <th className="text-left py-2 px-3 label-uppercase">Pressure</th>
+                      <th className="text-left py-2 px-3 label-uppercase">Intensity</th>
+                      <th className="text-left py-2 px-3 label-uppercase">Rel. Vol</th>
+                      <th className="text-left py-2 px-3 label-uppercase">Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {metrics.map((metric) => (
-                      <tr key={metric.id} className="border-b" data-testid={`row-metric-${metric.id}`}>
-                        <td className="py-2 px-3 font-medium">{metric.ticker}</td>
-                        <td className="py-2 px-3">
-                          <Badge variant="outline" className="text-xs">
-                            {metric.indexTarget}
-                          </Badge>
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground">{metric.date}</td>
-                        <td className="py-2 px-3">{metric.pressureScore}x</td>
-                        <td className="py-2 px-3">
-                          <span className={`inline-flex items-center gap-1 ${
-                            metric.intensity === "EXTREME"
-                              ? "text-red-600 dark:text-red-400"
-                              : metric.intensity === "HIGH"
-                              ? "text-amber-600 dark:text-amber-400"
-                              : "text-green-600 dark:text-green-400"
-                          }`}>
-                            {metric.intensity === "EXTREME" && <Flame className="w-3 h-3" />}
-                            {metric.intensity === "HIGH" && <Zap className="w-3 h-3" />}
-                            {metric.intensity === "NORMAL" && <CheckCircle className="w-3 h-3" />}
-                            {metric.intensity}
-                          </span>
-                        </td>
-                        <td className="py-2 px-3">{metric.relativeVolume}x</td>
-                        <td className="py-2 px-3">
-                          {metric.algoAlert?.includes("CAUTION") ? (
-                            <Badge variant="destructive">Alert</Badge>
-                          ) : (
-                            <Badge variant="secondary">Normal</Badge>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                    {metrics.map((metric) => {
+                      const config = getIntensityConfig(metric.intensity || "NORMAL");
+                      return (
+                        <tr 
+                          key={metric.id} 
+                          className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer" 
+                          data-testid={`row-metric-${metric.id}`}
+                        >
+                          <td className="py-3 px-3 font-semibold text-slate-900 dark:text-slate-100">{metric.ticker}</td>
+                          <td className="py-3 px-3">
+                            <span className="px-2 py-0.5 rounded-lg tag-slate font-semibold whitespace-nowrap">
+                              {metric.indexTarget}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-slate-500 dark:text-slate-400">{metric.date}</td>
+                          <td className="py-3 px-3 font-semibold">{metric.pressureScore}x</td>
+                          <td className="py-3 px-3">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg font-semibold ${config.tag}`}>
+                              {config.icon}
+                              {metric.intensity}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3">{metric.relativeVolume}x</td>
+                          <td className="py-3 px-3">
+                            {metric.algoAlert?.includes("CAUTION") ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg tag-red font-semibold">
+                                <AlertTriangle className="w-3 h-3" />
+                                Alert
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg tag-emerald font-semibold">
+                                <CheckCircle className="w-3 h-3" />
+                                Normal
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
