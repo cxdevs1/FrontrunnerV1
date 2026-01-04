@@ -1,18 +1,37 @@
 import type { AnalyzeTickerRequest, AnalysisResult } from "@shared/schema";
 
-const INDEX_AUM_SP500 = 12_500_000_000_000; // $12.5 Trillion
-const TOTAL_SP500_CAP = 52_000_000_000_000; // $52 Trillion
+const INDEX_DATA: Record<string, { aum: number; totalCap: number }> = {
+  SP500: { aum: 12_500_000_000_000, totalCap: 58_000_000_000_000 },
+  SP400: { aum: 1_600_000_000_000, totalCap: 3_200_000_000_000 },
+  SP600: { aum: 1_100_000_000_000, totalCap: 1_500_000_000_000 },
+};
 
 export function getMechanicalPressure(
   mktCap: number,
   price: number,
-  avgVol30d: number
-): number {
-  const weight = mktCap / TOTAL_SP500_CAP;
-  const requiredDollars = INDEX_AUM_SP500 * weight;
+  avgVol30d: number,
+  indexTarget: string
+): { pressureScore: number; requiredShares: number } {
+  const config = INDEX_DATA[indexTarget];
+  if (!config) {
+    return { pressureScore: 0, requiredShares: 0 };
+  }
+
+  const weight = mktCap / config.totalCap;
+  const requiredDollars = config.aum * weight;
   const requiredShares = requiredDollars / price;
   const pressureScore = requiredShares / avgVol30d;
-  return Math.round(pressureScore * 100) / 100;
+
+  return {
+    pressureScore: Math.round(pressureScore * 100) / 100,
+    requiredShares: Math.round(requiredShares),
+  };
+}
+
+export function getIntensityLabel(pressureScore: number): string {
+  if (pressureScore > 3.0) return "EXTREME";
+  if (pressureScore > 1.5) return "HIGH";
+  return "NORMAL";
 }
 
 export function detectAlgoFrontrunning(
@@ -25,10 +44,27 @@ export function detectAlgoFrontrunning(
 }
 
 export function analyzeNewAddition(request: AnalyzeTickerRequest): AnalysisResult {
-  const { ticker, marketCap, price, avgVolume30d, morningVolume, typicalMorningVolume } = request;
+  const {
+    ticker,
+    marketCap,
+    price,
+    avgVolume30d,
+    morningVolume,
+    typicalMorningVolume,
+    indexTarget,
+  } = request;
 
-  const pressureScore = getMechanicalPressure(marketCap, price, avgVolume30d);
-  const { rvol, isAlgoActive } = detectAlgoFrontrunning(morningVolume, typicalMorningVolume);
+  const { pressureScore, requiredShares } = getMechanicalPressure(
+    marketCap,
+    price,
+    avgVolume30d,
+    indexTarget
+  );
+  const intensity = getIntensityLabel(pressureScore);
+  const { rvol, isAlgoActive } = detectAlgoFrontrunning(
+    morningVolume,
+    typicalMorningVolume
+  );
 
   const algoAlert = isAlgoActive
     ? "CAUTION: Algos Front-running"
@@ -41,8 +77,12 @@ export function analyzeNewAddition(request: AnalyzeTickerRequest): AnalysisResul
 
   return {
     ticker,
+    indexTarget,
     pressureScore,
     pressureScoreDisplay: `${pressureScore}x Daily Vol`,
+    requiredShares,
+    requiredSharesDisplay: requiredShares.toLocaleString(),
+    intensity,
     relativeVolume: rvol,
     relativeVolumeDisplay: `${rvol}x`,
     algoAlert,
@@ -50,3 +90,5 @@ export function analyzeNewAddition(request: AnalyzeTickerRequest): AnalysisResul
     isAlgoActive,
   };
 }
+
+export const SUPPORTED_INDICES = Object.keys(INDEX_DATA);

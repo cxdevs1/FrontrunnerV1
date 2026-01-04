@@ -2,14 +2,17 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
-import { analyzeNewAddition } from "./analyzer";
+import { analyzeNewAddition, SUPPORTED_INDICES } from "./analyzer";
 import { z } from "zod";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Index Events endpoints
+  app.get("/api/supported-indices", (_req, res) => {
+    res.json(SUPPORTED_INDICES);
+  });
+
   app.get(api.indexEvents.list.path, async (_req, res) => {
     const events = await storage.getIndexEvents();
     res.json(events);
@@ -35,7 +38,6 @@ export async function registerRoutes(
     res.status(204).end();
   });
 
-  // Daily Metrics endpoints
   app.get(api.dailyMetrics.list.path, async (_req, res) => {
     const metrics = await storage.getDailyMetrics();
     res.json(metrics);
@@ -47,19 +49,20 @@ export async function registerRoutes(
     res.json(metrics);
   });
 
-  // Analysis endpoint
   app.post(api.analyze.calculate.path, async (req, res) => {
     try {
       const data = api.analyze.calculate.input.parse(req.body);
       const result = analyzeNewAddition(data);
 
-      // Store the analysis in daily_metrics
       const today = new Date().toISOString().split("T")[0];
       await storage.createDailyMetric({
         ticker: result.ticker,
+        indexTarget: result.indexTarget,
         date: today,
         pressureScore: result.pressureScore,
         relativeVolume: result.relativeVolume,
+        requiredShares: result.requiredShares,
+        intensity: result.intensity,
         morningVolume: data.morningVolume,
         typicalMorningVolume: data.typicalMorningVolume,
         algoAlert: result.algoAlert,

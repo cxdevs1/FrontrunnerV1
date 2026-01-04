@@ -16,8 +16,12 @@ export const errorSchemas = {
 
 export const analysisResultSchema = z.object({
   ticker: z.string(),
+  indexTarget: z.string(),
   pressureScore: z.number(),
   pressureScoreDisplay: z.string(),
+  requiredShares: z.number(),
+  requiredSharesDisplay: z.string(),
+  intensity: z.string(),
   relativeVolume: z.number(),
   relativeVolumeDisplay: z.string(),
   algoAlert: z.string(),

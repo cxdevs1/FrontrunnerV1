@@ -6,14 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { TrendingUp, AlertTriangle, Activity, BarChart3 } from "lucide-react";
+import { TrendingUp, AlertTriangle, Activity, BarChart3, Flame, Zap, CheckCircle } from "lucide-react";
 import type { AnalysisResult, DailyMetric } from "@shared/schema";
+
+const INDICES = ["SP500", "SP400", "SP600"] as const;
 
 export default function Home() {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     ticker: "",
+    indexTarget: "SP500" as typeof INDICES[number],
     marketCap: "",
     price: "",
     avgVolume30d: "",
@@ -29,6 +33,7 @@ export default function Home() {
   const analyzeMutation = useMutation({
     mutationFn: async (data: {
       ticker: string;
+      indexTarget: string;
       marketCap: number;
       price: number;
       avgVolume30d: number;
@@ -43,7 +48,7 @@ export default function Home() {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-metrics"] });
       toast({
         title: "Analysis Complete",
-        description: `${result.ticker}: ${result.pressureScoreDisplay}`,
+        description: `${result.ticker} (${result.indexTarget}): ${result.pressureScoreDisplay}`,
       });
     },
     onError: () => {
@@ -59,6 +64,7 @@ export default function Home() {
     e.preventDefault();
     analyzeMutation.mutate({
       ticker: formData.ticker.toUpperCase(),
+      indexTarget: formData.indexTarget,
       marketCap: parseFloat(formData.marketCap),
       price: parseFloat(formData.price),
       avgVolume30d: parseFloat(formData.avgVolume30d),
@@ -71,14 +77,41 @@ export default function Home() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const getIntensityIcon = (intensity: string) => {
+    switch (intensity) {
+      case "EXTREME":
+        return <Flame className="w-4 h-4" />;
+      case "HIGH":
+        return <Zap className="w-4 h-4" />;
+      default:
+        return <CheckCircle className="w-4 h-4" />;
+    }
+  };
+
+  const getIntensityColor = (intensity: string) => {
+    switch (intensity) {
+      case "EXTREME":
+        return "bg-red-500/10 text-red-600 border-red-500/30 dark:text-red-400";
+      case "HIGH":
+        return "bg-amber-500/10 text-amber-600 border-amber-500/30 dark:text-amber-400";
+      default:
+        return "bg-green-500/10 text-green-600 border-green-500/30 dark:text-green-400";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
           <BarChart3 className="w-8 h-8 text-muted-foreground" />
-          <h1 className="text-2xl font-semibold" data-testid="text-page-title">
-            Index Addition Analyzer
-          </h1>
+          <div>
+            <h1 className="text-2xl font-semibold" data-testid="text-page-title">
+              Index Addition Analyzer
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              S&P 500, MidCap 400 & SmallCap 600 mechanical pressure calculator
+            </p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -98,6 +131,29 @@ export default function Home() {
                     onChange={(e) => handleChange("ticker", e.target.value)}
                     required
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Target Index</Label>
+                  <RadioGroup
+                    value={formData.indexTarget}
+                    onValueChange={(value) => handleChange("indexTarget", value)}
+                    className="flex gap-4"
+                    data-testid="radio-index"
+                  >
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="SP500" id="sp500" />
+                      <Label htmlFor="sp500" className="font-normal cursor-pointer">S&P 500</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="SP400" id="sp400" />
+                      <Label htmlFor="sp400" className="font-normal cursor-pointer">MidCap 400</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="SP600" id="sp600" />
+                      <Label htmlFor="sp600" className="font-normal cursor-pointer">SmallCap 600</Label>
+                    </div>
+                  </RadioGroup>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -183,9 +239,12 @@ export default function Home() {
           {analysisResult && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Activity className="w-5 h-5" />
-                  Analysis Result: {analysisResult.ticker}
+                <CardTitle className="text-lg flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-5 h-5" />
+                    {analysisResult.ticker}
+                  </div>
+                  <Badge variant="outline">{analysisResult.indexTarget}</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -197,10 +256,29 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="p-4 rounded-md bg-muted">
-                    <div className="text-sm text-muted-foreground">Relative Volume</div>
-                    <div className="text-2xl font-bold" data-testid="text-relative-volume">
-                      {analysisResult.relativeVolumeDisplay}
+                    <div className="text-sm text-muted-foreground">Shares to Buy</div>
+                    <div className="text-2xl font-bold" data-testid="text-required-shares">
+                      {analysisResult.requiredSharesDisplay}
                     </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div
+                    className={`p-3 rounded-md border flex items-center gap-2 ${getIntensityColor(
+                      analysisResult.intensity
+                    )}`}
+                  >
+                    {getIntensityIcon(analysisResult.intensity)}
+                    <span className="font-semibold" data-testid="text-intensity">
+                      {analysisResult.intensity}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-md bg-muted flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Rel. Vol:</span>
+                    <span className="font-semibold" data-testid="text-relative-volume">
+                      {analysisResult.relativeVolumeDisplay}
+                    </span>
                   </div>
                 </div>
 
@@ -257,28 +335,47 @@ export default function Home() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-2 px-3 font-medium">Ticker</th>
+                      <th className="text-left py-2 px-3 font-medium">Index</th>
                       <th className="text-left py-2 px-3 font-medium">Date</th>
                       <th className="text-left py-2 px-3 font-medium">Pressure</th>
-                      <th className="text-left py-2 px-3 font-medium">Rel. Volume</th>
+                      <th className="text-left py-2 px-3 font-medium">Intensity</th>
+                      <th className="text-left py-2 px-3 font-medium">Rel. Vol</th>
                       <th className="text-left py-2 px-3 font-medium">Status</th>
-                      <th className="text-left py-2 px-3 font-medium">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {metrics.map((metric) => (
-                      <tr key={metric.id} className="border-b hover-elevate" data-testid={`row-metric-${metric.id}`}>
+                      <tr key={metric.id} className="border-b" data-testid={`row-metric-${metric.id}`}>
                         <td className="py-2 px-3 font-medium">{metric.ticker}</td>
+                        <td className="py-2 px-3">
+                          <Badge variant="outline" className="text-xs">
+                            {metric.indexTarget}
+                          </Badge>
+                        </td>
                         <td className="py-2 px-3 text-muted-foreground">{metric.date}</td>
                         <td className="py-2 px-3">{metric.pressureScore}x</td>
+                        <td className="py-2 px-3">
+                          <span className={`inline-flex items-center gap-1 ${
+                            metric.intensity === "EXTREME"
+                              ? "text-red-600 dark:text-red-400"
+                              : metric.intensity === "HIGH"
+                              ? "text-amber-600 dark:text-amber-400"
+                              : "text-green-600 dark:text-green-400"
+                          }`}>
+                            {metric.intensity === "EXTREME" && <Flame className="w-3 h-3" />}
+                            {metric.intensity === "HIGH" && <Zap className="w-3 h-3" />}
+                            {metric.intensity === "NORMAL" && <CheckCircle className="w-3 h-3" />}
+                            {metric.intensity}
+                          </span>
+                        </td>
                         <td className="py-2 px-3">{metric.relativeVolume}x</td>
                         <td className="py-2 px-3">
                           {metric.algoAlert?.includes("CAUTION") ? (
-                            <Badge variant="destructive" size="sm">Alert</Badge>
+                            <Badge variant="destructive">Alert</Badge>
                           ) : (
-                            <Badge variant="secondary" size="sm">Normal</Badge>
+                            <Badge variant="secondary">Normal</Badge>
                           )}
                         </td>
-                        <td className="py-2 px-3">{metric.action}</td>
                       </tr>
                     ))}
                   </tbody>
