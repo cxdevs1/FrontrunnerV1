@@ -5,10 +5,46 @@ import { api } from "@shared/routes";
 import { analyzeNewAddition, SUPPORTED_INDICES } from "./analyzer";
 import { z } from "zod";
 
+function getMockStockAdditions() {
+  return [
+    {
+      ticker: "ACME",
+      indexTarget: "SP500",
+      marketCap: 45000000000,
+      price: 187.50,
+      avgVolume30d: 2800000,
+      announcementDate: "2026-01-10",
+      effectiveDate: "2026-01-24",
+    },
+    {
+      ticker: "NEXGEN",
+      indexTarget: "SP400",
+      marketCap: 8500000000,
+      price: 72.30,
+      avgVolume30d: 950000,
+      announcementDate: "2026-01-08",
+      effectiveDate: "2026-01-22",
+    },
+    {
+      ticker: "MICROTECH",
+      indexTarget: "SP600",
+      marketCap: 2100000000,
+      price: 34.15,
+      avgVolume30d: 420000,
+      announcementDate: "2026-01-12",
+      effectiveDate: "2026-01-28",
+    },
+  ];
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  app.get("/api/mock/stock-additions", (_req, res) => {
+    res.json(getMockStockAdditions());
+  });
+
   app.get("/api/supported-indices", (_req, res) => {
     res.json(SUPPORTED_INDICES);
   });
