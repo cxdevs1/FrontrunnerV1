@@ -5,34 +5,36 @@ import { api } from "@shared/routes";
 import { analyzeNewAddition, SUPPORTED_INDICES } from "./analyzer";
 import { z } from "zod";
 
-function getMockStockAdditions() {
+function getMockIndexNews() {
+  const today = new Date().toISOString().split("T")[0];
   return [
     {
-      ticker: "ACME",
-      indexTarget: "SP500",
-      marketCap: 45000000000,
-      price: 187.50,
-      avgVolume30d: 2800000,
-      announcementDate: "2026-01-10",
-      effectiveDate: "2026-01-24",
+      ticker: "PATH",
+      companyName: "UiPath Inc.",
+      eventType: "Migration",
+      fromIndex: "SP600",
+      toIndex: "SP400",
+      announcementDate: today,
+      effectiveDate: "2026-01-16",
+      currentPrice: 24.50,
+      marketCap: 14200000000,
+      avgVolume30d: 6500000,
+      morningVolume: 12000000,
+      typicalMorningVolume: 1500000,
     },
     {
-      ticker: "NEXGEN",
-      indexTarget: "SP400",
-      marketCap: 8500000000,
-      price: 72.30,
-      avgVolume30d: 950000,
-      announcementDate: "2026-01-08",
-      effectiveDate: "2026-01-22",
-    },
-    {
-      ticker: "MICROTECH",
-      indexTarget: "SP600",
-      marketCap: 2100000000,
-      price: 34.15,
-      avgVolume30d: 420000,
-      announcementDate: "2026-01-12",
-      effectiveDate: "2026-01-28",
+      ticker: "HOOD",
+      companyName: "Robinhood Markets",
+      eventType: "Addition",
+      fromIndex: null,
+      toIndex: "SP500",
+      announcementDate: today,
+      effectiveDate: "2026-01-23",
+      currentPrice: 32.10,
+      marketCap: 28500000000,
+      avgVolume30d: 15000000,
+      morningVolume: 18000000,
+      typicalMorningVolume: 4000000,
     },
   ];
 }
@@ -41,8 +43,8 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  app.get("/api/mock/stock-additions", (_req, res) => {
-    res.json(getMockStockAdditions());
+  app.get("/api/mock/index-news", (_req, res) => {
+    res.json(getMockIndexNews());
   });
 
   app.get("/api/supported-indices", (_req, res) => {
