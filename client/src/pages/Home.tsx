@@ -20,6 +20,7 @@ import {
   HelpCircle
 } from "lucide-react";
 import { PressureGauge } from "@/components/PressureGauge";
+import { ShadowInventory } from "@/components/ShadowInventory";
 import type { AnalysisResult, DailyMetric } from "@shared/schema";
 
 const INDICES = ["SP500", "SP400", "SP600"] as const;
@@ -486,6 +487,9 @@ export default function Home() {
             )}
           </div>
         </div>
+
+        {/* S&P 500 Eligibility Watchlist */}
+        <ShadowInventory />
       </div>
     </div>
   );
