@@ -47,6 +47,8 @@ export const analyzeTickerSchema = z.object({
   avgVolume30d: z.number().positive(),
   morningVolume: z.number().positive(),
   typicalMorningVolume: z.number().positive(),
+  isMigration: z.boolean().optional().default(false),
+  fromIndex: z.enum(["SP500", "SP400", "SP600"]).optional(),
 });
 
 export type AnalyzeTickerRequest = z.infer<typeof analyzeTickerSchema>;
@@ -64,4 +66,9 @@ export interface AnalysisResult {
   algoAlert: string;
   action: string;
   isAlgoActive: boolean;
+  isMigration?: boolean;
+  fromIndex?: string;
+  buyPressure?: number;
+  sellPressure?: number;
+  netDemand?: number;
 }
