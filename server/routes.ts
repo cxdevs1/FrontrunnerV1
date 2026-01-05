@@ -45,6 +45,63 @@ class MemoryCache {
 
 const cache = new MemoryCache(30);
 
+// Rate Limiter for API Key Protection
+class RateLimiter {
+  private requests: Map<string, number[]> = new Map();
+  private maxRequests: number;
+  private windowMs: number;
+
+  constructor(maxRequests: number = 30, windowSeconds: number = 60) {
+    this.maxRequests = maxRequests;
+    this.windowMs = windowSeconds * 1000;
+    
+    // Cleanup old entries every minute
+    setInterval(() => this.cleanup(), 60000);
+  }
+
+  isAllowed(clientId: string): boolean {
+    const now = Date.now();
+    const timestamps = this.requests.get(clientId) || [];
+    
+    // Filter to only requests within the window
+    const recentRequests = timestamps.filter(t => now - t < this.windowMs);
+    
+    if (recentRequests.length >= this.maxRequests) {
+      return false;
+    }
+    
+    recentRequests.push(now);
+    this.requests.set(clientId, recentRequests);
+    return true;
+  }
+
+  getRemainingRequests(clientId: string): number {
+    const now = Date.now();
+    const timestamps = this.requests.get(clientId) || [];
+    const recentRequests = timestamps.filter(t => now - t < this.windowMs);
+    return Math.max(0, this.maxRequests - recentRequests.length);
+  }
+
+  private cleanup(): void {
+    const now = Date.now();
+    const keysToDelete: string[] = [];
+    
+    this.requests.forEach((timestamps, clientId) => {
+      const recent = timestamps.filter((t: number) => now - t < this.windowMs);
+      if (recent.length === 0) {
+        keysToDelete.push(clientId);
+      } else {
+        this.requests.set(clientId, recent);
+      }
+    });
+    
+    keysToDelete.forEach((key) => this.requests.delete(key));
+  }
+}
+
+// 30 requests per minute per IP to protect API key
+const tickerLookupLimiter = new RateLimiter(30, 60);
+
 function getMockIndexNews() {
   const today = new Date().toISOString().split("T")[0];
   return [
@@ -159,6 +216,23 @@ export async function registerRoutes(
 
   app.post("/api/ticker-lookup", async (req, res) => {
     try {
+      // Rate limiting by IP address
+      const clientIp = req.ip || req.socket.remoteAddress || "unknown";
+      
+      if (!tickerLookupLimiter.isAllowed(clientIp)) {
+        const remaining = tickerLookupLimiter.getRemainingRequests(clientIp);
+        res.setHeader("X-RateLimit-Remaining", remaining.toString());
+        res.setHeader("Retry-After", "60");
+        res.status(429).json({ 
+          message: "Rate limit exceeded. Please wait before making more requests.",
+          retryAfter: 60
+        });
+        return;
+      }
+      
+      // Add rate limit headers
+      res.setHeader("X-RateLimit-Remaining", tickerLookupLimiter.getRemainingRequests(clientIp).toString());
+      
       const { ticker, indexTarget } = req.body;
 
       if (!ticker || !indexTarget) {
