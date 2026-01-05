@@ -12,6 +12,37 @@ declare module "http" {
   }
 }
 
+// Security Headers Middleware - XSS and Clickjacking Protection
+app.use((_req, res, next) => {
+  const isProduction = process.env.NODE_ENV === "production";
+  
+  // Prevent MIME type sniffing
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  
+  // Legacy XSS protection (modern browsers use CSP instead)
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  
+  // Prevent clickjacking - deny all framing
+  res.setHeader("X-Frame-Options", "DENY");
+  
+  // Content Security Policy - strict in production, relaxed in dev for HMR
+  if (isProduction) {
+    res.setHeader(
+      "Content-Security-Policy",
+      "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';"
+    );
+  }
+  // Note: CSP omitted in development to allow Vite HMR
+  
+  // Referrer Policy - send origin only on cross-origin requests
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  
+  // Permissions Policy - disable sensitive features
+  res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+  
+  next();
+});
+
 app.use(
   express.json({
     verify: (req, _res, buf) => {
@@ -31,6 +62,14 @@ export function log(message: string, source = "express") {
   });
 
   console.log(`${formattedTime} [${source}] ${message}`);
+}
+
+// Environment configuration - check for real API key
+export const hasRealApiKey = !!process.env.FIN_API_KEY;
+if (hasRealApiKey) {
+  log("FIN_API_KEY detected - using real market data API");
+} else {
+  log("FIN_API_KEY not found - using high-quality mock data");
 }
 
 app.use((req, res, next) => {

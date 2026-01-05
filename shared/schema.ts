@@ -1,4 +1,4 @@
-import { pgTable, text, serial, date, real, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, date, real, timestamp, integer, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -32,7 +32,10 @@ export const dailyMetrics = pgTable("daily_metrics", {
   algoAlert: text("algo_alert"),
   action: text("action"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_daily_metrics_ticker_date").on(table.ticker, table.date),
+  index("idx_daily_metrics_created_at").on(table.createdAt),
+]);
 
 export const insertDailyMetricSchema = createInsertSchema(dailyMetrics).omit({ id: true, createdAt: true });
 
