@@ -19,6 +19,7 @@ import {
   BellRing,
   HelpCircle
 } from "lucide-react";
+import { PressureGauge } from "@/components/PressureGauge";
 import type { AnalysisResult, DailyMetric } from "@shared/schema";
 
 const INDICES = ["SP500", "SP400", "SP600"] as const;
@@ -333,23 +334,22 @@ export default function Home() {
                   {getIntensityConfig(analysisResult.intensity).label} - {analysisResult.action}
                 </p>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2.5">
-                    <label className="label-uppercase flex items-center gap-1.5">
-                      Pressure Score
-                      <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help" />
-                    </label>
-                    <div className={`w-full px-3.5 py-2.5 rounded-lg text-center font-semibold whitespace-nowrap ${getIntensityConfig(analysisResult.intensity).tag}`} data-testid="text-pressure-score">
-                      {analysisResult.pressureScoreDisplay}
-                    </div>
+                <div className="flex gap-6">
+                  <div className="flex-shrink-0">
+                    <PressureGauge 
+                      value={analysisResult.pressureScore} 
+                      intensity={analysisResult.intensity}
+                    />
                   </div>
-                  <div className="space-y-2.5">
-                    <label className="label-uppercase flex items-center gap-1.5">
-                      Shares to Buy
-                      <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help" />
-                    </label>
-                    <div className="w-full px-3.5 py-2.5 rounded-lg text-center font-semibold tag-indigo whitespace-nowrap" data-testid="text-required-shares">
-                      {analysisResult.requiredSharesDisplay}
+                  <div className="flex-1 space-y-4">
+                    <div className="space-y-2.5">
+                      <label className="label-uppercase flex items-center gap-1.5">
+                        Shares to Buy
+                        <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help" />
+                      </label>
+                      <div className="w-full px-3.5 py-2.5 rounded-lg text-center font-semibold tag-indigo whitespace-nowrap" data-testid="text-required-shares">
+                        {analysisResult.requiredSharesDisplay}
+                      </div>
                     </div>
                   </div>
                 </div>
