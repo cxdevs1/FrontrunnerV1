@@ -4,6 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { 
   TrendingUp, 
@@ -213,8 +214,20 @@ Institutional-Grade Index Intelligence
               <h1 className="text-slate-900 dark:text-slate-100" data-testid="text-page-title">
                 Index Inclusion Sniper
               </h1>
-              <p className="text-slate-500 dark:text-slate-400">
-                S&P 500 / MidCap 400 / SmallCap 600 Mechanical Pressure Calculator
+              <p className="text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                S&P 500 / MidCap 400 / SmallCap 600 
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center gap-1 cursor-help">
+                      Mechanical Pressure
+                      <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg px-3 py-2">
+                    <p className="text-sm">The forced buying power of index funds that MUST happen before the effective date.</p>
+                  </TooltipContent>
+                </Tooltip>
+                {" "}Calculator
               </p>
             </div>
           </div>
@@ -244,7 +257,18 @@ Institutional-Grade Index Intelligence
             <div className="card-header-gradient-indigo px-4 py-2.5 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Target className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                <span className="font-semibold text-slate-900 dark:text-slate-100">Analyze New Addition</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                  Analyze New Addition
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg px-3 py-2">
+                      <p className="text-sm"><strong>Addition:</strong> A new stock entering an index.</p>
+                      <p className="text-sm mt-1"><strong>Migration:</strong> When a stock "graduates" from one index to another, causing simultaneous selling and buying.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </span>
               </div>
               <span className="px-2 py-0.5 rounded-lg bg-indigo-100 text-indigo-700 border border-indigo-300 dark:bg-indigo-900 dark:text-indigo-300 dark:border-indigo-700 font-semibold whitespace-nowrap">
                 Calculator
@@ -434,7 +458,17 @@ Institutional-Grade Index Intelligence
 
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <div className="space-y-2.5">
-                    <label className="label-uppercase">Relative Volume</label>
+                    <label className="label-uppercase flex items-center gap-1.5">
+                      Relative Volume
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg px-3 py-2">
+                          <p className="text-sm">Shows if trading activity is higher than normal. High RVOL suggests big players (algos) are already active.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </label>
                     <div className="w-full px-3.5 py-2.5 rounded-lg text-center font-semibold tag-cyan whitespace-nowrap" data-testid="text-relative-volume">
                       {analysisResult.relativeVolumeDisplay}
                     </div>

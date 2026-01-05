@@ -5,9 +5,11 @@ import {
   ChevronDown,
   Star,
   AlertCircle,
-  Filter
+  Filter,
+  HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface WatchlistStock {
   id: number;
@@ -159,7 +161,17 @@ export function ShadowInventory() {
       <div className="card-header-gradient-indigo px-4 py-2.5 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Star className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-          <span className="font-semibold text-slate-900 dark:text-slate-100">S&P 500 Eligibility Watchlist</span>
+          <span className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+            S&P 500 Eligibility Watchlist
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg px-3 py-2">
+                <p className="text-sm">Stocks that aren't in the index yet but meet all the rules to be added soon.</p>
+              </TooltipContent>
+            </Tooltip>
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <span className="px-2 py-0.5 rounded-lg tag-indigo font-semibold whitespace-nowrap">
