@@ -6,7 +6,9 @@ import {
   Star,
   AlertCircle,
   Filter,
-  HelpCircle
+  HelpCircle,
+  AlertTriangle,
+  ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -106,6 +108,34 @@ const MOCK_WATCHLIST: WatchlistStock[] = [
   }
 ];
 
+interface IndexVacancy {
+  id: number;
+  index: string;
+  spots: number;
+  reason: string;
+  company: string;
+  date: string;
+}
+
+const MOCK_VACANCIES: IndexVacancy[] = [
+  {
+    id: 1,
+    index: "S&P 500",
+    spots: 1,
+    reason: "Merger",
+    company: "Discover Financial",
+    date: "2026-01-03"
+  },
+  {
+    id: 2,
+    index: "S&P 400",
+    spots: 2,
+    reason: "Promoted to S&P 500",
+    company: "Palantir, AppLovin",
+    date: "2026-01-02"
+  }
+];
+
 type SortField = "ticker" | "marketCap" | "eligibilityScore" | "priceChange24h" | "consecutivePositiveQuarters";
 type SortDirection = "asc" | "desc";
 
@@ -182,6 +212,40 @@ export function ShadowInventory() {
           </span>
         </div>
       </div>
+
+      {/* Active Vacancies Banner */}
+      {MOCK_VACANCIES.length > 0 && (
+        <div className="mx-4 mt-4 p-3 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-700/50" data-testid="vacancies-banner">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            <span className="font-semibold text-amber-800 dark:text-amber-300 text-sm">Active Vacancies</span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="w-3.5 h-3.5 text-amber-500 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg px-3 py-2">
+                <p className="text-sm"><strong>Open Spots.</strong> When a company leaves an index (merger, bankruptcy, etc.), one of the stocks below will be chosen to fill the vacancy. These are your Sniper targets.</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="space-y-1.5">
+            {MOCK_VACANCIES.map((vacancy) => (
+              <div key={vacancy.id} className="flex items-center gap-2 text-sm">
+                <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200">
+                  {vacancy.index}
+                </span>
+                <span className="text-amber-700 dark:text-amber-300 font-medium">
+                  {vacancy.spots} Spot{vacancy.spots > 1 ? "s" : ""} Open
+                </span>
+                <ArrowRight className="w-3 h-3 text-amber-500" />
+                <span className="text-slate-600 dark:text-slate-400">
+                  {vacancy.reason} of {vacancy.company}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="p-4">
