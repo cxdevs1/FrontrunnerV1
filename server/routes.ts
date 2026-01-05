@@ -5,6 +5,46 @@ import { api } from "@shared/routes";
 import { analyzeNewAddition, SUPPORTED_INDICES } from "./analyzer";
 import { z } from "zod";
 
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+class MemoryCache {
+  private cache: Map<string, CacheEntry<any>> = new Map();
+  private defaultTTL: number;
+
+  constructor(defaultTTLSeconds: number = 60) {
+    this.defaultTTL = defaultTTLSeconds * 1000;
+  }
+
+  get<T>(key: string): T | null {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+    
+    if (Date.now() - entry.timestamp > this.defaultTTL) {
+      this.cache.delete(key);
+      return null;
+    }
+    
+    return entry.data as T;
+  }
+
+  set<T>(key: string, data: T): void {
+    this.cache.set(key, { data, timestamp: Date.now() });
+  }
+
+  invalidate(key: string): void {
+    this.cache.delete(key);
+  }
+
+  clear(): void {
+    this.cache.clear();
+  }
+}
+
+const cache = new MemoryCache(30);
+
 function getMockIndexNews() {
   const today = new Date().toISOString().split("T")[0];
   return [
@@ -115,6 +155,90 @@ export async function registerRoutes(
       }
       throw err;
     }
+  });
+
+  app.get("/api/shadow-inventory", (_req, res) => {
+    const CACHE_KEY = "shadow-inventory";
+    
+    const cached = cache.get<any[]>(CACHE_KEY);
+    if (cached) {
+      res.setHeader("X-Cache", "HIT");
+      res.json(cached);
+      return;
+    }
+
+    const shadowInventoryData = [
+      {
+        ticker: "PLTR",
+        company: "Palantir Technologies",
+        sector: "Technology",
+        marketCap: 18500000000,
+        positiveQuarters: 5,
+        avgVolume: 45000000,
+        priceChange24h: 2.4,
+        eps: 0.21,
+        eligibilityScore: 92,
+      },
+      {
+        ticker: "RBLX",
+        company: "Roblox Corporation",
+        sector: "Technology",
+        marketCap: 21000000000,
+        positiveQuarters: 4,
+        avgVolume: 12000000,
+        priceChange24h: -1.2,
+        eps: 0.08,
+        eligibilityScore: 85,
+      },
+      {
+        ticker: "DASH",
+        company: "DoorDash Inc.",
+        sector: "Consumer Discretionary",
+        marketCap: 19800000000,
+        positiveQuarters: 4,
+        avgVolume: 8500000,
+        priceChange24h: 1.8,
+        eps: 0.15,
+        eligibilityScore: 88,
+      },
+      {
+        ticker: "SNAP",
+        company: "Snap Inc.",
+        sector: "Technology",
+        marketCap: 16200000000,
+        positiveQuarters: 6,
+        avgVolume: 22000000,
+        priceChange24h: -0.5,
+        eps: 0.12,
+        eligibilityScore: 78,
+      },
+      {
+        ticker: "COIN",
+        company: "Coinbase Global",
+        sector: "Financials",
+        marketCap: 23500000000,
+        positiveQuarters: 5,
+        avgVolume: 9800000,
+        priceChange24h: 4.2,
+        eps: 0.45,
+        eligibilityScore: 91,
+      },
+      {
+        ticker: "RIVN",
+        company: "Rivian Automotive",
+        sector: "Consumer Discretionary",
+        marketCap: 15800000000,
+        positiveQuarters: 4,
+        avgVolume: 18000000,
+        priceChange24h: -2.1,
+        eps: -0.85,
+        eligibilityScore: 72,
+      },
+    ];
+
+    cache.set(CACHE_KEY, shadowInventoryData);
+    res.setHeader("X-Cache", "MISS");
+    res.json(shadowInventoryData);
   });
 
   return httpServer;

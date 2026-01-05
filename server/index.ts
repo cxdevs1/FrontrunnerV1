@@ -64,10 +64,22 @@ app.use((req, res, next) => {
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    const isProduction = process.env.NODE_ENV === "production";
+    
+    if (!isProduction) {
+      console.error("Error:", err);
+    } else {
+      console.error(`[ERROR] ${err.message || "Unknown error"}`);
+    }
 
-    res.status(status).json({ message });
-    throw err;
+    const clientMessage = isProduction && status >= 500
+      ? "An internal error occurred. Please try again later."
+      : err.message || "Internal Server Error";
+
+    res.status(status).json({ 
+      message: clientMessage,
+      ...(isProduction ? {} : { stack: err.stack })
+    });
   });
 
   // importantly only setup vite in development and after
