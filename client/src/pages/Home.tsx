@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { PressureGauge } from "@/components/PressureGauge";
 import { ShadowInventory } from "@/components/ShadowInventory";
+import { TradeTimeline } from "@/components/TradeTimeline";
 import type { AnalysisResult, DailyMetric } from "@shared/schema";
 
 const INDICES = ["SP500", "SP400", "SP600"] as const;
@@ -490,6 +491,12 @@ Institutional-Grade Index Intelligence
                     </div>
                   </div>
                 </div>
+
+                {/* Trade Timeline */}
+                <TradeTimeline 
+                  announcementDate={analysisResult.announcementDate}
+                  effectiveDate={analysisResult.effectiveDate}
+                />
 
                 {/* Footer */}
                 <div className="pt-4 mt-4 border-t border-slate-200 dark:border-slate-700">

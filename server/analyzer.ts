@@ -153,6 +153,13 @@ export function analyzeNewAddition(request: AnalyzeTickerRequest): AnalysisResul
     requiredSharesDisplay = requiredShares.toLocaleString();
   }
 
+  // Generate mock dates for timeline (announcement = today, effective = 7 days out)
+  const today = new Date();
+  const effectiveDate = new Date(today);
+  effectiveDate.setDate(today.getDate() + 7);
+  
+  const formatDate = (d: Date) => d.toISOString().split('T')[0];
+
   return {
     ticker,
     indexTarget,
@@ -171,6 +178,8 @@ export function analyzeNewAddition(request: AnalyzeTickerRequest): AnalysisResul
     buyPressure,
     sellPressure,
     netDemand,
+    announcementDate: formatDate(today),
+    effectiveDate: formatDate(effectiveDate),
   };
 }
 

@@ -71,4 +71,6 @@ export interface AnalysisResult {
   buyPressure?: number;
   sellPressure?: number;
   netDemand?: number;
+  announcementDate: string;
+  effectiveDate: string;
 }
