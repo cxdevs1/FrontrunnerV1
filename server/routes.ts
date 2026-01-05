@@ -157,6 +157,72 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/ticker-lookup", async (req, res) => {
+    try {
+      const { ticker, indexTarget } = req.body;
+
+      if (!ticker || !indexTarget) {
+        res.status(400).json({ message: "Missing ticker or indexTarget" });
+        return;
+      }
+
+      const apiKey = process.env.FIN_API_KEY;
+      if (!apiKey) {
+        res.status(500).json({ message: "API Key Not Configured" });
+        return;
+      }
+
+      const response = await fetch(
+        `https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(ticker.toUpperCase())}?apikey=${apiKey}`
+      );
+
+      if (!response.ok) {
+        res.status(response.status).json({ message: "API request failed" });
+        return;
+      }
+
+      const data = await response.json();
+
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        res.status(404).json({ message: `Ticker '${ticker}' not found` });
+        return;
+      }
+
+      const quote = data[0];
+      const price = quote.price;
+      const marketCap = quote.marketCap;
+      const avgVolume = quote.avgVolume;
+
+      if (!price || !marketCap || !avgVolume) {
+        res.status(404).json({ message: `Incomplete data for ticker '${ticker}'` });
+        return;
+      }
+
+      const result = analyzeNewAddition({
+        ticker: ticker.toUpperCase(),
+        marketCap,
+        price,
+        avgVolume30d: avgVolume,
+        morningVolume: avgVolume,
+        typicalMorningVolume: avgVolume,
+        indexTarget,
+        isMigration: false,
+      });
+
+      res.json({
+        ...result,
+        liveData: {
+          price,
+          marketCap,
+          avgVolume,
+        },
+      });
+    } catch (err) {
+      console.error("Ticker lookup error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.get("/api/shadow-inventory", (_req, res) => {
     const CACHE_KEY = "shadow-inventory";
     
