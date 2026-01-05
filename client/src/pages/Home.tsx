@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,8 @@ import {
   Share2,
   Copy,
   Download,
-  Check
+  Check,
+  Loader2
 } from "lucide-react";
 import { PressureGauge } from "@/components/PressureGauge";
 import { ShadowInventory } from "@/components/ShadowInventory";
@@ -46,6 +47,97 @@ export default function Home() {
   const [alertEnabled, setAlertEnabled] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [autoSniperLoading, setAutoSniperLoading] = useState(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-Sniper: Watch ticker and auto-fetch data
+  useEffect(() => {
+    // Clear any existing debounce timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    const ticker = formData.ticker.trim().toUpperCase();
+    const indexTarget = formData.indexTarget;
+    
+    // Only trigger if ticker has at least 3 characters
+    if (ticker.length < 3) {
+      // Reset loading state when ticker is cleared/too short
+      setAutoSniperLoading(false);
+      return;
+    }
+
+    // Create abort controller for race condition protection
+    const abortController = new AbortController();
+
+    // Debounce: wait 500ms before calling API
+    debounceTimerRef.current = setTimeout(async () => {
+      setAutoSniperLoading(true);
+      
+      try {
+        const response = await fetch("/api/ticker-lookup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ticker, indexTarget }),
+          signal: abortController.signal,
+        });
+
+        // Check if this request was aborted (stale)
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Lookup failed");
+        }
+
+        const result: AnalysisResult = await response.json();
+        
+        // Double-check ticker still matches (race condition protection)
+        if (formData.ticker.trim().toUpperCase() !== ticker) {
+          return;
+        }
+        
+        setAnalysisResult(result);
+        
+        // Auto-fill the form with live data if available
+        if ((result as any).liveData) {
+          const liveData = (result as any).liveData;
+          setFormData(prev => ({
+            ...prev,
+            marketCap: String(liveData.marketCap || ""),
+            price: String(liveData.price || ""),
+            avgVolume30d: String(liveData.avgVolume || ""),
+            morningVolume: String(liveData.avgVolume || ""),
+            typicalMorningVolume: String(liveData.avgVolume || ""),
+          }));
+        }
+      } catch (err) {
+        // Ignore aborted requests
+        if (err instanceof Error && err.name === "AbortError") {
+          return;
+        }
+        toast({
+          title: "Ticker not found in S&P Database",
+          description: err instanceof Error ? err.message : "Unable to fetch data",
+          variant: "destructive",
+        });
+      } finally {
+        if (!abortController.signal.aborted) {
+          setAutoSniperLoading(false);
+        }
+      }
+    }, 500);
+
+    // Cleanup on unmount or re-run - abort pending request
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      abortController.abort();
+    };
+  }, [formData.ticker, formData.indexTarget, toast]);
 
   const generateSnapshotReport = (result: AnalysisResult) => {
     const isMigration = result.isMigration && result.fromIndex;
@@ -289,14 +381,22 @@ Institutional-Grade Index Intelligence
                       Ticker Symbol
                       <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help" />
                     </label>
-                    <Input
-                      data-testid="input-ticker"
-                      placeholder="e.g. PATH"
-                      value={formData.ticker}
-                      onChange={(e) => handleChange("ticker", e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        data-testid="input-ticker"
+                        placeholder="e.g. PATH"
+                        value={formData.ticker}
+                        onChange={(e) => handleChange("ticker", e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 pr-10"
+                        required
+                      />
+                      {autoSniperLoading && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                          <Loader2 className="w-4 h-4 text-indigo-600 animate-spin" />
+                          <span className="text-xs text-indigo-600 font-medium whitespace-nowrap">Institutional Data Loading...</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-2.5">
                     <label className="label-uppercase">Target Index</label>
