@@ -224,7 +224,7 @@ Institutional-Grade Index Intelligence
                     </span>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg px-3 py-2">
-                    <p className="text-sm">The forced buying power of index funds that MUST happen before the effective date.</p>
+                    <p className="text-sm"><strong>Forced Buying.</strong> Index funds are required to buy this many shares regardless of price. High scores mean the stock has a higher chance of a price spike.</p>
                   </TooltipContent>
                 </Tooltip>
                 {" "}Calculator
@@ -265,7 +265,7 @@ Institutional-Grade Index Intelligence
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg px-3 py-2">
                       <p className="text-sm"><strong>Addition:</strong> A new stock entering an index.</p>
-                      <p className="text-sm mt-1"><strong>Migration:</strong> When a stock "graduates" from one index to another, causing simultaneous selling and buying.</p>
+                      <p className="text-sm mt-1"><strong>Upgrading Indices.</strong> The stock is moving to a bigger league (e.g., SmallCap to MidCap). This tells you if the new buying power is stronger than the old index selling it.</p>
                     </TooltipContent>
                   </Tooltip>
                 </span>
@@ -465,7 +465,7 @@ Institutional-Grade Index Intelligence
                           <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg px-3 py-2">
-                          <p className="text-sm">Shows if trading activity is higher than normal. High RVOL suggests big players (algos) are already active.</p>
+                          <p className="text-sm"><strong>The Activity Meter.</strong> If this is high (red), it means institutional "smart money" is already trading the news. If it's normal (green), you might be early to the move.</p>
                         </TooltipContent>
                       </Tooltip>
                     </label>
@@ -474,7 +474,17 @@ Institutional-Grade Index Intelligence
                     </div>
                   </div>
                   <div className="space-y-2.5">
-                    <label className="label-uppercase">Algo Detection</label>
+                    <label className="label-uppercase flex items-center gap-1.5">
+                      Algo Detection
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg px-3 py-2">
+                          <p className="text-sm"><strong>Robot Tracker.</strong> This flags if high-speed computer programs are currently controlling the price action.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </label>
                     <div className={`w-full px-3.5 py-2.5 rounded-lg text-center font-semibold whitespace-nowrap ${analysisResult.isAlgoActive ? "tag-red" : "tag-emerald"}`} data-testid="badge-algo-status">
                       {analysisResult.isAlgoActive ? "CAUTION" : "CLEAR"}
                     </div>

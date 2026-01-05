@@ -168,7 +168,7 @@ export function ShadowInventory() {
                 <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help" />
               </TooltipTrigger>
               <TooltipContent className="max-w-xs bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg px-3 py-2">
-                <p className="text-sm">Stocks that aren't in the index yet but meet all the rules to be added soon.</p>
+                <p className="text-sm"><strong>The Waiting Room.</strong> These are healthy, profitable companies that meet all the S&P rules and are the most likely candidates to be added next.</p>
               </TooltipContent>
             </Tooltip>
           </span>
