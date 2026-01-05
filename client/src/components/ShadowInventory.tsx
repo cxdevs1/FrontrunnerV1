@@ -8,7 +8,7 @@ import {
   Filter,
   HelpCircle,
   AlertTriangle,
-  ArrowRight
+  Target
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -213,43 +213,37 @@ export function ShadowInventory() {
         </div>
       </div>
 
-      {/* Active Vacancies Banner */}
-      {MOCK_VACANCIES.length > 0 && (
-        <div className="mx-4 mt-4 p-3 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-700/50" data-testid="vacancies-banner">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-            <span className="font-semibold text-amber-800 dark:text-amber-300 text-sm">Active Vacancies</span>
+      {/* Main Content */}
+      <div className="p-4">
+        {/* Vacancy Banner */}
+        <div 
+          className="mb-4 p-3 rounded-lg border border-amber-300 dark:border-amber-600"
+          style={{ backgroundColor: '#FFFBEB' }}
+          data-testid="vacancies-banner"
+        >
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+              <span className="font-bold text-amber-800 text-sm whitespace-nowrap">ACTIVE VACANCIES:</span>
+              <span className="text-amber-700 text-sm">
+                S&P 500 (1 Spot Open - Merger), S&P 400 (0), S&P 600 (2 Spots Open)
+              </span>
+            </div>
             <Tooltip>
               <TooltipTrigger asChild>
-                <HelpCircle className="w-3.5 h-3.5 text-amber-500 cursor-help" />
+                <div className="flex items-center gap-1 text-amber-600 cursor-help flex-shrink-0">
+                  <Target className="w-4 h-4" />
+                  <span className="text-xs font-medium">Hunting Grounds</span>
+                </div>
               </TooltipTrigger>
               <TooltipContent className="max-w-xs bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg px-3 py-2">
-                <p className="text-sm"><strong>Open Spots.</strong> When a company leaves an index (merger, bankruptcy, etc.), one of the stocks below will be chosen to fill the vacancy. These are your Sniper targets.</p>
+                <p className="text-sm"><strong>Hunting Grounds.</strong> Vacancies are open spots in the index. When a company leaves (merger, bankruptcy, spinoff), one of the eligible stocks below will be chosen to fill it. These are your prime Sniper targets.</p>
               </TooltipContent>
             </Tooltip>
           </div>
-          <div className="space-y-1.5">
-            {MOCK_VACANCIES.map((vacancy) => (
-              <div key={vacancy.id} className="flex items-center gap-2 text-sm">
-                <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200">
-                  {vacancy.index}
-                </span>
-                <span className="text-amber-700 dark:text-amber-300 font-medium">
-                  {vacancy.spots} Spot{vacancy.spots > 1 ? "s" : ""} Open
-                </span>
-                <ArrowRight className="w-3 h-3 text-amber-500" />
-                <span className="text-slate-600 dark:text-slate-400">
-                  {vacancy.reason} of {vacancy.company}
-                </span>
-              </div>
-            ))}
-          </div>
         </div>
-      )}
 
-      {/* Main Content */}
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between gap-4 mb-4">
           <p className="text-slate-500 dark:text-slate-400">
             Stocks meeting S&P 500 eligibility criteria based on market cap and earnings consistency.
           </p>
